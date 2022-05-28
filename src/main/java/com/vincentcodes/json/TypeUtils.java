@@ -2,6 +2,9 @@ package com.vincentcodes.json;
 
 import com.vincentcodes.json.parser.ConversionException;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class TypeUtils {
     public static boolean isNumber(Class<?> clazz){
         if(clazz.equals(int.class) || clazz.equals(Integer.class)){
@@ -30,7 +33,7 @@ public class TypeUtils {
         }else if(clazz.equals(float.class) || clazz.equals(Float.class)) {
             return (float)value;
         }
-        throw new ConversionException("Cannot convert ");
+        throw new ConversionException("Cannot convert '" + value + "' to object");
     }
     public static boolean isBoolean(Class<?> clazz){
         return clazz.equals(boolean.class) || clazz.equals(Boolean.class);
@@ -40,5 +43,28 @@ public class TypeUtils {
     }
     public static boolean isString(Class<?> clazz){
         return clazz.equals(String.class);
+    }
+
+    public static Object[] primitiveArrayToObjectArray(Class<?> elementType, Object array){
+        if(elementType.equals(byte.class) || elementType.equals(short.class) || elementType.equals(int.class))
+            return Arrays.stream((int[]) array).boxed().toArray();
+        else if(elementType.equals(long.class))
+            return Arrays.stream((long[]) array).boxed().toArray();
+        else if(elementType.equals(double.class) || elementType.equals(float.class))
+            return Arrays.stream((double[]) array).boxed().toArray();
+        else if(elementType.equals(boolean.class)){
+            boolean[] converted = (boolean[]) array;
+            ArrayList<Boolean> fools = new ArrayList<>();
+            for(boolean bool : converted)
+                fools.add(bool);
+            return fools.toArray();
+        }else if(elementType.equals(char.class)){
+            char[] converted = (char[]) array;
+            ArrayList<Character> fools = new ArrayList<>();
+            for(char c : converted)
+                fools.add(c);
+            return fools.toArray();
+        }
+        return (Object[]) array;
     }
 }

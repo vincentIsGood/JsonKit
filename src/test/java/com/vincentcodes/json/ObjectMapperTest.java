@@ -1,9 +1,6 @@
 package com.vincentcodes.json;
 
-import com.vincentcodes.json.entity.ConvenienceStore;
-import com.vincentcodes.json.entity.ConvenienceStoreRaw;
-import com.vincentcodes.json.entity.NewConvenienceStore;
-import com.vincentcodes.json.entity.Person;
+import com.vincentcodes.json.entity.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -112,6 +109,22 @@ public class ObjectMapperTest {
         ArrayList<Person> list = new ArrayList<>();
         list.add(new Person("vincent", 19, "Hello"));
         assertEquals("[{\"name\":\"vincent\",\"age\":19,\"desc\":\"Hello\"}]", mapper.objectToJson(list));
+    }
+
+    @Test
+    public void test_object_in_object_to_string_json() throws CannotMapFromObjectException {
+        ImaginaryObject obj = new ImaginaryObject();
+        obj.test = new Person[]{
+            new Person("vincent", 19, "hello"),
+            new Person("neko", 19, "cat")
+        };
+        assertEquals("{\"test\":[{\"name\":\"vincent\",\"age\":19,\"desc\":\"hello\"},{\"name\":\"neko\",\"age\":19,\"desc\":\"cat\"}]}", mapper.objectToJson(obj));
+    }
+    @Test
+    public void test_object_with_null_val_to_string_json() throws CannotMapFromObjectException {
+        ImaginaryObject obj = new ImaginaryObject();
+        obj.test = new Person[2];
+        assertEquals("{\"test\":[null,null]}", mapper.objectToJson(obj));
     }
 
     @Test

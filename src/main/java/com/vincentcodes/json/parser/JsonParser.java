@@ -57,6 +57,9 @@ public class JsonParser {
 
     public JsonParser(){}
 
+    /**
+     * To understand what object maybe, see {@link NodeToObjectConverter}
+     */
     public ArrayList<Object> parseJsonArray(String json) throws UnexpectedToken{
         this.lexer = new JsonLexer(json);
         if(lexer.getCurrentToken() == null){
@@ -66,6 +69,9 @@ public class JsonParser {
         //throw new UnexpectedToken("The json must start with TokenTypes.OPEN_SQUARE_BRACKET for JsonParser.parseJsonArray(String)");
     }
 
+    /**
+     * To understand what object maybe, see {@link NodeToObjectConverter}
+     */
     public HashMap<String, Object> parseJson(String json) throws UnexpectedToken{
         this.lexer = new JsonLexer(json);
         if(lexer.getCurrentToken() == null){
@@ -75,6 +81,7 @@ public class JsonParser {
         return NodeToObjectConverter.nodeToJavaObject(object());
     }
 
+    // ------------------ Low Level Parsing ------------------ //
     private Node number() throws UnexpectedToken{
         Token currentToken = lexer.getCurrentToken();
         if(currentToken.type == TokenTypes.PLUS || currentToken.type == TokenTypes.MINUS){

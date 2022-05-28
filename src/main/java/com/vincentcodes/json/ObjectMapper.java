@@ -7,6 +7,7 @@ import com.vincentcodes.json.parser.UnexpectedToken;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.vincentcodes.json.TypeUtils.*;
 
@@ -120,6 +121,7 @@ public class ObjectMapper {
                 } else if (isString(fieldType)) {
                     newFieldValue = jsonObject.getString(fieldName);
                 } else if (fieldType.isArray()) {
+                    // slower?
                     Object arrayObject = Array.newInstance(fieldType.getComponentType(), 0);
                     newFieldValue = jsonToArrayUnsafe(jsonObject.getArray(fieldName), fieldType.getComponentType()).toArray((Object[]) arrayObject);
                 } else if (List.class.isAssignableFrom(fieldTypeSuperclass == null? fieldType : fieldTypeSuperclass)) {
@@ -261,6 +263,7 @@ public class ObjectMapper {
 
 
     // TO JSON
+    // TODO: add the support to convert JsonObject, JsonArray to json as well.
     /**
      * Currently, HashMap is not usable
      */
@@ -289,15 +292,22 @@ public class ObjectMapper {
             return arrayObjectToJson(((Collection<?>) obj).toArray());
         }
         StringBuilder jsonRaw = new StringBuilder("{");
-        Class<?> fieldType;
+        Class<?> fieldType = null;
         Class<?> fieldTypeSuperclass;
-        String fieldName;
+        String fieldName = "";
         try {
             for (Field field : type.getDeclaredFields()) {
                 field.setAccessible(true);
-                fieldType = field.getType();
-                fieldTypeSuperclass = fieldType.getSuperclass();
                 fieldName = field.getName();
+                //fieldType = field.getType();
+
+                if(field.get(obj) == null){
+                    jsonRaw.append("\"").append(fieldName).append("\":").append("null").append(",");
+                    continue;
+                }
+
+                fieldType = field.get(obj).getClass(); // we need underlying type (actual)
+                fieldTypeSuperclass = fieldType.getSuperclass();
 
                 pushTraceItem(type + "[" + fieldName + "]");
                 if (isNumber(fieldType) || isBoolean(fieldType)) {
@@ -305,7 +315,8 @@ public class ObjectMapper {
                 } else if (isChar(fieldType) || isString(fieldType)) {
                     jsonRaw.append("\"").append(fieldName).append("\":\"").append(field.get(obj)).append("\"");
                 } else if (fieldType.isArray()) {
-                    jsonRaw.append("\"").append(fieldName).append("\":").append(arrayObjectToJson((Object[]) field.get(obj)));
+                    Object[] objectArr = primitiveArrayToObjectArray(fieldType.getComponentType(), field.get(obj));
+                    jsonRaw.append("\"").append(fieldName).append("\":").append(arrayObjectToJson(objectArr));
                 } else if (Collection.class.isAssignableFrom(fieldTypeSuperclass == null? fieldType : fieldTypeSuperclass)) {
                     jsonRaw.append("\"").append(fieldName).append("\":").append(arrayObjectToJson(((List<?>) field.get(obj)).toArray()));
                 } else {
@@ -318,7 +329,7 @@ public class ObjectMapper {
             if(jsonRaw.charAt(jsonRaw.length()-1) == ',')
                 jsonRaw.deleteCharAt(jsonRaw.length()-1);
         }catch (Exception e){
-            throw new CannotMapFromObjectException(e);
+            throw new CannotMapFromObjectException("Error occured at field '"+fieldName+"' with tyoe '"+fieldType+"'. Recorded trace: " + trace, e);
         }
         return jsonRaw.append("}").toString();
     }
@@ -326,6 +337,11 @@ public class ObjectMapper {
     private String arrayObjectToJson(Object[] objects) throws CannotMapFromObjectException{
         StringBuilder jsonRaw = new StringBuilder("[");
         for(Object obj : objects){
+            if(obj == null){
+                jsonRaw.append("null").append(",");
+                continue;
+            }
+
             Class<?> type = obj.getClass();
             if (isNumber(type) || isBoolean(type)) {
                 jsonRaw.append(obj);
