@@ -121,6 +121,10 @@ public class JsonParser {
             ArrayList<Node> arrayList = new ArrayList<>();
             ArrayNode arrayNode = new ArrayNode(arrayList);
             Token nextToken = lexer.nextToken();
+            if(nextToken.type == TokenTypes.CLOSE_SQUARE_BRACKET){
+                // Special case for []. Skip "]". Since it won't pass through the while loop
+                lexer.nextToken();
+            }
             while(nextToken.type != TokenTypes.CLOSE_SQUARE_BRACKET){
                 arrayList.add(value());
                 nextToken = lexer.getCurrentToken();

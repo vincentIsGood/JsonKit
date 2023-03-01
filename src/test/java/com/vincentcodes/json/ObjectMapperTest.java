@@ -46,6 +46,13 @@ public class ObjectMapperTest {
     }
 
     @Test
+    public void test_array_string_to_jsonobject() throws CannotMapToObjectException{
+        List<Object> arr = mapper.jsonToArray("[\"asd\", \"123\", \"dsa\"]", Object.class);
+        assertEquals("asd", arr.get(0));
+        assertEquals("123", arr.get(1));
+    }
+
+    @Test
     public void test_json_to_convenience_raw() throws CannotMapToObjectException{
         ConvenienceStoreRaw storeRaw = mapper.jsonToObject(SampleJsons.Contexualized.convenienceStoreJson, ConvenienceStoreRaw.class);
         assertEquals("vincent", storeRaw.manager.getString("name"));

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
-Test set: com.vincentcodes.json.JsonTest
+Test set: com.vincentcodes.json.SelfishTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s - in com.vincentcodes.json.JsonTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s - in com.vincentcodes.json.SelfishTest

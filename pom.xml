@@ -6,7 +6,7 @@
 
     <groupId>com.vincentcodes</groupId>
     <artifactId>JsonKit</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
 
     <properties>
         <maven.compiler.source>13</maven.compiler.source>
