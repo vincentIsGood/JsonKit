@@ -112,40 +112,47 @@ public class ObjectMapper {
 
                 pushTraceItem(type + "[" + fieldName + "]");
                 Object newFieldValue;
-                if (isNumber(fieldType)) {
-                    newFieldValue = toProperNumber(fieldType, jsonObject.getNumber(fieldName));
-                } else if (isBoolean(fieldType)) {
-                    newFieldValue = jsonObject.getBoolean(fieldName);
-                } else if (isChar(fieldType)) {
-                    newFieldValue = jsonObject.getString(fieldName).charAt(0);
-                } else if (isString(fieldType)) {
-                    newFieldValue = jsonObject.getString(fieldName);
-                } else if (fieldType.isArray()) {
-                    // slower?
-                    Object arrayObject = Array.newInstance(fieldType.getComponentType(), 0);
-                    newFieldValue = jsonToArrayUnsafe(jsonObject.getArray(fieldName), fieldType.getComponentType()).toArray((Object[]) arrayObject);
-                } else if (List.class.isAssignableFrom(fieldTypeSuperclass == null? fieldType : fieldTypeSuperclass)) {
-                    Class<?> listGenericType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-                    newFieldValue = jsonToArrayUnsafe(jsonObject.getArray(fieldName), listGenericType);
-                } else if (Set.class.isAssignableFrom(fieldTypeSuperclass == null? fieldType : fieldTypeSuperclass)){
-                    Class<?> listGenericType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
-                    newFieldValue = new HashSet<>(jsonToArrayUnsafe(jsonObject.getArray(fieldName), listGenericType));
-                } else if (Map.class.isAssignableFrom(fieldTypeSuperclass == null? fieldType : fieldTypeSuperclass)){
-                    Type[] genericTypes = ((ParameterizedType) field.getGenericType()).getActualTypeArguments();
-                    newFieldValue = jsonToHashMapUnsafe(jsonObject.getObject(fieldName), (Class<?>)genericTypes[0], (Class<?>) genericTypes[1]);
-                } else if (fieldType.equals(Object.class)) {
-                    newFieldValue = jsonObject.getRawObject(fieldName);
-                }else if(fieldType.equals(JsonObject.class)) {
-                    newFieldValue = jsonObject.getObject(fieldName);
-                }else if(fieldType.equals(JsonArray.class)){
-                    newFieldValue = jsonObject.getArray(fieldName);
-                } else {
-                    newFieldValue = jsonToObjectUnsafe(jsonObject.getObject(fieldName), fieldType);
+                try {
+                    if (isNumber(fieldType)) {
+                        newFieldValue = toProperNumber(fieldType, jsonObject.getNumber(fieldName));
+                    } else if (isBoolean(fieldType)) {
+                        newFieldValue = jsonObject.getBoolean(fieldName);
+                    } else if (isChar(fieldType)) {
+                        newFieldValue = jsonObject.getString(fieldName).charAt(0);
+                    } else if (isString(fieldType)) {
+                        newFieldValue = jsonObject.getString(fieldName);
+                    } else if (fieldType.isArray()) {
+                        // slower?
+                        Object arrayObject = Array.newInstance(fieldType.getComponentType(), 0);
+                        newFieldValue = jsonToArrayUnsafe(jsonObject.getArray(fieldName), fieldType.getComponentType()).toArray((Object[]) arrayObject);
+                    } else if (List.class.isAssignableFrom(fieldTypeSuperclass == null ? fieldType : fieldTypeSuperclass)) {
+                        Class<?> listGenericType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+                        newFieldValue = jsonToArrayUnsafe(jsonObject.getArray(fieldName), listGenericType);
+                    } else if (Set.class.isAssignableFrom(fieldTypeSuperclass == null ? fieldType : fieldTypeSuperclass)) {
+                        Class<?> listGenericType = (Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+                        newFieldValue = new HashSet<>(jsonToArrayUnsafe(jsonObject.getArray(fieldName), listGenericType));
+                    } else if (Map.class.isAssignableFrom(fieldTypeSuperclass == null ? fieldType : fieldTypeSuperclass)) {
+                        Type[] genericTypes = ((ParameterizedType) field.getGenericType()).getActualTypeArguments();
+                        newFieldValue = jsonToHashMapUnsafe(jsonObject.getObject(fieldName), (Class<?>) genericTypes[0], (Class<?>) genericTypes[1]);
+                    } else if (fieldType.equals(Object.class)) {
+                        newFieldValue = jsonObject.getRawObject(fieldName);
+                    } else if (fieldType.equals(JsonObject.class)) {
+                        newFieldValue = jsonObject.getObject(fieldName);
+                    } else if (fieldType.equals(JsonArray.class)) {
+                        newFieldValue = jsonObject.getArray(fieldName);
+                    } else {
+                        newFieldValue = jsonToObjectUnsafe(jsonObject.getObject(fieldName), fieldType);
+                    }
+                    field.set(obj, newFieldValue);
+
+                }catch (NullPointerException e) {
+                    if (!config.isAllowMissingProperty())
+                        throw new CannotMapToObjectException("Field with '" + fieldName + "' of type '" + fieldType + "' " +
+                                "does not have its corresponding json property. " +
+                                "The trace starts from: " + (config.isDebugModeOn() ? trace : "Debug mode is not enabled"), e);
                 }
-                field.set(obj, newFieldValue);
                 popTraceItem();
             }
-            return obj;
         }catch (NoSuchMethodException ex){
             throw new CannotMapToObjectException("The class being mapped does not have a default constructor or it is an inner class", ex);
         }catch (InstantiationException |
@@ -153,11 +160,6 @@ public class ObjectMapper {
                 IllegalArgumentException |
                 InvocationTargetException e){
             throw new CannotMapToObjectException(e);
-        }catch (NullPointerException e){
-            if(!config.isAllowMissingProperty())
-                throw new CannotMapToObjectException("Field with '" + fieldName + "' of type '" + fieldType + "' " +
-                        "does not have its corresponding json property. " +
-                        "The trace starts from: " + (config.isDebugModeOn()? trace : "Debug mode is not enabled"), e);
         }catch(ConversionException e){
             throw new CannotMapToObjectException("Error occured with a field with '" + fieldName + "' of type '" + fieldType + "' " +
                     "The trace starts from: " + (config.isDebugModeOn()? trace : "Debug mode is not enabled"), e);
